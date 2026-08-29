@@ -1,0 +1,14 @@
+name: cornerstonesis-backup
+services:
+  backup:
+    image: postgres:18.1-alpine
+    env_file: [./secrets/postgres.env]
+    environment: {PGHOST: cornerstonesis-postgres-1}
+    volumes:
+      - /mnt/90g/cornerstonsis/runtime/backups:/backups
+      - /mnt/90g/cornerstonsis/runtime/storage:/documents:ro
+      - ./scripts:/scripts:ro
+    networks: [internal]
+    entrypoint: [/scripts/backup.sh]
+networks:
+  internal: {external: true, name: cornerstonesis_internal}

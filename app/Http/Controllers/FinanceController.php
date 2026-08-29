@@ -1,0 +1,4 @@
+<?php
+namespace App\Http\Controllers;
+use App\Models\LedgerEntry; use App\Models\LedgerTransaction; use Illuminate\Http\Request; use Inertia\Inertia; use Inertia\Response;
+class FinanceController extends Controller { public function index(Request $request): Response { $person=$request->user()->person; $transactions=$person?LedgerTransaction::with('entries')->where('person_id',$person->id)->latest('posted_at')->get():collect(); $balances=$person?LedgerEntry::query()->join('ledger_transactions','ledger_transactions.id','=','ledger_entries.ledger_transaction_id')->where('ledger_transactions.person_id',$person->id)->where('ledger_transactions.status','posted')->selectRaw('ledger_transactions.currency, SUM(debit-credit) AS balance')->groupBy('ledger_transactions.currency')->get():collect(); return Inertia::render('Finance/Index',compact('transactions','balances')); } }

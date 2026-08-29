@@ -1,0 +1,22 @@
+openapi: 3.1.0
+info: {title: Cornerstone SIS Institutional API, version: 1.0.0}
+servers: [{url: https://sis.cornerstonelabs.org/api/v1}]
+components:
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: https://sis.cornerstonelabs.org/oauth/token
+          scopes: {catalog:read: Read catalog, students:read: Read student records}
+security: [{oauth2: []}]
+paths:
+  /programs:
+    get: {security: [{oauth2: [catalog:read]}], responses: {'200': {description: Paginated programs}}}
+  /sections:
+    get: {security: [{oauth2: [catalog:read]}], responses: {'200': {description: Paginated sections}}}
+  /students/{person}:
+    get:
+      security: [{oauth2: [students:read]}]
+      parameters: [{in: path, name: person, required: true, schema: {type: string, format: uuid}}]
+      responses: {'200': {description: Student and enrollment history}}

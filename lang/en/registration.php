@@ -1,0 +1,1 @@
+<?php return ['wrong_period'=>'The section is not in this enrollment period.','blocked_hold'=>'A hold prevents registration.','section_full'=>'The section and waitlist are full.','missing_prerequisites'=>'Prerequisites have not been completed.','time_conflict'=>'This section conflicts with the current timetable.'];

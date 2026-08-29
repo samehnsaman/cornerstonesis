@@ -1,0 +1,8 @@
+.git
+.env
+secrets
+runtime
+node_modules
+vendor
+tests
+storage/logs/*

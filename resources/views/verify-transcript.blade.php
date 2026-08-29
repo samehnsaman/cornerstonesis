@@ -1,0 +1,1 @@
+<!doctype html><html><body style="font-family:sans-serif;padding:3rem"><h1>Cornerstone SIS document verification</h1><h2 style="color:#b45309">DEMO — NOT OFFICIAL</h2><p>Serial: {{ $issue->serial_number }}</p><p>Status: {{ $issue->revoked_at ? 'REVOKED' : 'Valid demo issue' }}</p><p>Issued: {{ $issue->issued_at->toIso8601String() }}</p></body></html>

@@ -1,0 +1,75 @@
+name: cornerstonesis
+x-logging: &logging {driver: json-file, options: {max-size: "10m", max-file: "5"}}
+x-app: &app
+  image: ${SIS_IMAGE:?Set SIS_IMAGE to an immutable ARM64 image tag or digest}
+  env_file:
+    - path: ./secrets/app.env
+      required: false
+  restart: unless-stopped
+  networks: [internal]
+  volumes:
+    - /mnt/90g/cornerstonsis/runtime/storage:/var/www/storage/app
+  logging: *logging
+  depends_on:
+    postgres: {condition: service_healthy}
+    valkey: {condition: service_healthy}
+services:
+  web:
+    image: ${SIS_WEB_IMAGE:?Set SIS_WEB_IMAGE to an immutable ARM64 image tag or digest}
+    restart: unless-stopped
+    networks: [internal, proxy]
+    mem_limit: 64m
+    logging: *logging
+    depends_on: {app: {condition: service_healthy}}
+    healthcheck: {test: [CMD, wget, -qO-, http://127.0.0.1:8080/healthz], interval: 15s, timeout: 3s, retries: 5}
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: proxy
+      traefik.http.routers.cornerstonesis.rule: Host(`sis.cornerstonelabs.org`)
+      traefik.http.routers.cornerstonesis.entrypoints: websecure
+      traefik.http.routers.cornerstonesis.tls: "true"
+      traefik.http.routers.cornerstonesis.tls.certresolver: le
+      traefik.http.routers.cornerstonesis.middlewares: cornerstonesis-security@docker
+      traefik.http.services.cornerstonesis.loadbalancer.server.port: "8080"
+      traefik.http.middlewares.cornerstonesis-security.headers.stsSeconds: "31536000"
+      traefik.http.middlewares.cornerstonesis-security.headers.stsIncludeSubdomains: "true"
+      traefik.http.middlewares.cornerstonesis-security.headers.contentTypeNosniff: "true"
+      traefik.http.middlewares.cornerstonesis-security.headers.frameDeny: "true"
+      traefik.http.middlewares.cornerstonesis-security.headers.referrerPolicy: strict-origin-when-cross-origin
+  app:
+    <<: *app
+    mem_limit: 512m
+    healthcheck: {test: [CMD-SHELL, "php-fpm -t"], interval: 15s, timeout: 5s, retries: 5}
+  queue:
+    <<: *app
+    command: [php, artisan, queue:work, redis, "--sleep=3", "--tries=5", "--max-time=3600", "--timeout=90"]
+    mem_limit: 256m
+  scheduler:
+    <<: *app
+    command: [php, artisan, schedule:work]
+    mem_limit: 128m
+  postgres:
+    image: postgres:18.1-alpine
+    restart: unless-stopped
+    networks: [internal]
+    shm_size: 128m
+    mem_limit: 768m
+    env_file:
+      - path: ./secrets/postgres.env
+        required: false
+    command: [postgres, -c, shared_buffers=128MB, -c, work_mem=4MB, -c, max_connections=40]
+    volumes: [/mnt/90g/cornerstonsis/runtime/postgres:/var/lib/postgresql/data]
+    logging: *logging
+    healthcheck: {test: [CMD-SHELL, "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"], interval: 10s, timeout: 5s, retries: 10}
+  valkey:
+    image: valkey/valkey:8.1.5-alpine
+    restart: unless-stopped
+    networks: [internal]
+    mem_limit: 96m
+    command: [valkey-server, --appendonly, "yes", --maxmemory, 64mb, --maxmemory-policy, noeviction]
+    volumes: [/mnt/90g/cornerstonsis/runtime/valkey:/data]
+    logging: *logging
+    healthcheck: {test: [CMD, valkey-cli, ping], interval: 10s, timeout: 3s, retries: 10}
+networks:
+  internal: {name: cornerstonesis_internal, internal: true}
+  proxy: {external: true, name: proxy}
