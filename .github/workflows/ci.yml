@@ -7,7 +7,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
-        with: {php-version: '8.4', extensions: pdo_sqlite, bcmath, intl}
+        with: {php-version: '8.4', extensions: 'pdo_sqlite, bcmath, intl'}
       - run: composer install --no-interaction --prefer-dist
       - run: cp .env.testing .env
       - run: php artisan key:generate
