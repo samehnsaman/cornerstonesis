@@ -23,6 +23,17 @@ class RegistrationService
             $termEnrollment->loadMissing('programEnrollment');
             $personId = $termEnrollment->programEnrollment->person_id;
 
+            // Treat a repeated registration request as idempotent. The unique
+            // database constraint remains the final guard for concurrent calls.
+            $existing = Registration::query()
+                ->where('term_enrollment_id', $termEnrollment->id)
+                ->where('section_id', $section->id)
+                ->first();
+
+            if ($existing) {
+                return $existing;
+            }
+
             if ($section->academic_period_id !== $termEnrollment->academic_period_id) {
                 throw ValidationException::withMessages(['section_id' => __('registration.wrong_period')]);
             }
