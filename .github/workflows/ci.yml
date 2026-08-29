@@ -6,15 +6,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.4'
-          extensions: 'pdo_sqlite, bcmath, intl'
-          coverage: none
-      - run: composer install --no-interaction --prefer-dist
+      - name: Install PHP dependencies in pinned container
+        run: docker run --rm -v "$PWD:/app" -w /app composer:2 composer install --no-interaction --prefer-dist
       - run: cp .env.testing .env
-      - run: php artisan key:generate
-      - run: php artisan test
+      - name: Run Laravel tests in pinned container
+        run: docker run --rm -v "$PWD:/app" -w /app composer:2 php artisan test
       - uses: actions/setup-node@v5
         with: {node-version: '22', cache: npm}
       - run: npm ci && npm run build
