@@ -1,0 +1,1 @@
+17 2 * * * ubuntu cd /mnt/90g/cornerstonsis && /usr/bin/docker compose -f compose.backup.yaml run --rm backup >> /mnt/90g/cornerstonsis/runtime/backups/backup.log 2>&1
