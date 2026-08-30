@@ -12,6 +12,7 @@ use App\Models\Person;
 use App\Models\Program;
 use App\Models\Role;
 use App\Models\User;
+use Database\Seeders\RoleTemplateSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -20,6 +21,44 @@ use Tests\TestCase;
 class AdminPortalTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_role_templates_can_be_provisioned_without_demo_accounts(): void
+    {
+        $this->seed(RoleTemplateSeeder::class);
+
+        $this->assertDatabaseCount('roles', 7);
+        $this->assertDatabaseMissing('users', ['email' => 'admin@example.test']);
+        $this->assertSame(['*'], Role::where('code', 'system-administrator')->firstOrFail()->permissions);
+    }
+
+    public function test_role_assignment_effective_dates_are_enforced(): void
+    {
+        $this->seed();
+        $user = User::factory()->create(['status' => 'active']);
+        $role = Role::where('code', 'read-only-auditor')->firstOrFail();
+
+        DB::table('role_assignments')->insert([
+            'id' => (string) Str::uuid(),
+            'user_id' => $user->id,
+            'role_id' => $role->id,
+            'starts_at' => now()->addDay(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->assertFalse($user->hasPermission('admin.access'));
+
+        DB::table('role_assignments')->where('user_id', $user->id)->update([
+            'starts_at' => now()->subDay(),
+            'ends_at' => now()->addDay(),
+        ]);
+
+        $this->assertTrue($user->fresh()->hasPermission('admin.access'));
+
+        DB::table('role_assignments')->where('user_id', $user->id)->update(['ends_at' => now()->subMinute()]);
+
+        $this->assertFalse($user->fresh()->hasPermission('admin.access'));
+    }
 
     public function test_admin_portal_requires_permission_and_staff_mfa(): void
     {

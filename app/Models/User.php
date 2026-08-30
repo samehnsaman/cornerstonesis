@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\CarbonImmutable;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -46,9 +47,16 @@ class User extends Authenticatable implements OAuthenticatable
     {
         return $this->roles()->get()
             ->contains(function (Role $role) use ($permission, $scope): bool {
+                $startsAt = $role->pivot->starts_at
+                    ? CarbonImmutable::parse($role->pivot->starts_at)
+                    : null;
+                $endsAt = $role->pivot->ends_at
+                    ? CarbonImmutable::parse($role->pivot->ends_at)
+                    : null;
+
                 if ($role->pivot->revoked_at !== null
-                    || ($role->pivot->starts_at !== null && $role->pivot->starts_at->isAfter(now()))
-                    || ($role->pivot->ends_at !== null && $role->pivot->ends_at->isBefore(now()))) {
+                    || ($startsAt !== null && $startsAt->isFuture())
+                    || ($endsAt !== null && $endsAt->isPast())) {
                     return false;
                 }
                 if (! in_array('*', $role->permissions, true) && ! in_array($permission, $role->permissions, true)) {
