@@ -158,7 +158,7 @@ return new class extends Migration
         Schema::create('academic_periods', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->foreignUuid('organization_id')->constrained()->cascadeOnDelete();
-            $table->foreignUuid('parent_id')->nullable()->constrained('academic_periods')->nullOnDelete();
+            $table->uuid('parent_id')->nullable();
             $table->string('code')->unique();
             $table->string('name_en');
             $table->string('name_ar')->nullable();
@@ -171,6 +171,10 @@ return new class extends Migration
             $table->date('withdrawal_deadline')->nullable();
             $table->string('status')->default('planned');
             $table->timestamps();
+        });
+
+        Schema::table('academic_periods', function (Blueprint $table) {
+            $table->foreign('parent_id')->references('id')->on('academic_periods')->nullOnDelete();
         });
 
         Schema::create('grading_scales', function (Blueprint $table) {

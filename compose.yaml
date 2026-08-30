@@ -8,7 +8,7 @@ x-app: &app
   restart: unless-stopped
   networks: [internal]
   volumes:
-    - /mnt/90g/cornerstonsis/runtime/storage:/var/www/storage/app
+    - /mnt/90g/cornerstonsis/runtime/storage:/var/www/storage
   logging: *logging
   depends_on:
     postgres: {condition: service_healthy}
@@ -58,7 +58,7 @@ services:
       - path: ./secrets/postgres.env
         required: false
     command: [postgres, -c, shared_buffers=128MB, -c, work_mem=4MB, -c, max_connections=40]
-    volumes: [/mnt/90g/cornerstonsis/runtime/postgres:/var/lib/postgresql/data]
+    volumes: [/mnt/90g/cornerstonsis/runtime/postgres:/var/lib/postgresql]
     logging: *logging
     healthcheck: {test: [CMD-SHELL, "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"], interval: 10s, timeout: 5s, retries: 10}
   valkey:
