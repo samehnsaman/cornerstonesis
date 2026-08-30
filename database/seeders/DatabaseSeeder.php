@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\{AcademicPeriod, Course, CourseVersion, CurriculumVersion, Department, Person, Program, ProgramEnrollment, Role, Section, TermEnrollment, User};
+use App\Models\{AcademicPeriod, Course, CourseVersion, CurriculumVersion, Department, Person, Program, ProgramEnrollment, Section, TermEnrollment, User};
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -32,7 +32,6 @@ class DatabaseSeeder extends Seeder
         $person=Person::create(['user_id'=>$user->id,'external_id'=>'SISPOC-STU-0001','given_name'=>'Demo','family_name'=>'Applicant','given_name_ar'=>'طالب','family_name_ar'=>'تجريبي','email'=>$user->email]);
         $enrollment=ProgramEnrollment::create(['person_id'=>$person->id,'program_id'=>$program->id,'curriculum_version_id'=>$curriculum->id,'campus_id'=>$campus,'student_number'=>'SISPOC-0001','started_on'=>'2026-09-01','status'=>'active']);
         TermEnrollment::create(['program_enrollment_id'=>$enrollment->id,'academic_period_id'=>$period->id,'status'=>'eligible','credit_limit'=>18]);
-        $role=Role::create(['code'=>'super-admin','name_en'=>'POC Administrator','name_ar'=>'مدير النظام التجريبي','permissions'=>['*'],'privileged'=>true]);
-        DB::table('role_assignments')->insert(['id'=>Str::uuid(),'user_id'=>$user->id,'role_id'=>$role->id,'campus_id'=>$campus,'created_at'=>now(),'updated_at'=>now()]);
+        $this->call(DemoAccessSeeder::class);
     }
 }

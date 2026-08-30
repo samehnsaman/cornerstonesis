@@ -6,6 +6,7 @@ use App\Models\Concerns\HasUuidPrimaryKey;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable(['person_id', 'program_id', 'intake_period_id', 'application_number', 'status', 'submitted_at', 'decided_at', 'decided_by', 'decision_reason', 'conditions', 'form_data'])]
 class Application extends Model
@@ -36,4 +37,7 @@ class Application extends Model
     {
         return $this->belongsTo(AcademicPeriod::class, 'intake_period_id');
     }
+
+    public function documents(): HasMany { return $this->hasMany(ApplicationDocument::class); }
+    public function reviews(): HasMany { return $this->hasMany(ApplicationReview::class); }
 }
