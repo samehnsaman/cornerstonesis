@@ -4,16 +4,15 @@ namespace App\Models;
 
 use App\Models\Concerns\HasUuidPrimaryKey;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Department extends Model
+class Organization extends Model
 {
     use HasUuidPrimaryKey;
 
     protected $guarded = [];
 
-    public function campus(): BelongsTo
+    protected function casts(): array
     {
-        return $this->belongsTo(Campus::class);
+        return ['is_poc' => 'boolean', 'supported_currencies' => 'array', 'transcript_branding' => 'array'];
     }
 }

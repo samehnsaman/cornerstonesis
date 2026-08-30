@@ -19,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         $middleware->alias([
             'permission' => \App\Http\Middleware\RequirePermission::class,
+            'staff.mfa' => \App\Http\Middleware\RequireStaffMfa::class,
             'client' => \Laravel\Passport\Http\Middleware\CheckClientCredentials::class,
             'scopes' => \Laravel\Passport\Http\Middleware\CheckScopes::class,
         ]);

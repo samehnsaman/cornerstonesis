@@ -11,6 +11,8 @@
         "infer-conventions",
         "laravel-best-practices",
         "testing-best-practices",
+        "passport-development",
+        "inertia-react-development",
         "tailwindcss-development"
     ]
 }

@@ -16,8 +16,15 @@ use Inertia\Response;
 
 class AuthController extends Controller
 {
-    public function loginForm(): Response { return Inertia::render('Auth/Login'); }
-    public function registerForm(): Response { return Inertia::render('Auth/Register'); }
+    public function loginForm(): Response
+    {
+        return Inertia::render('Auth/Login');
+    }
+
+    public function registerForm(): Response
+    {
+        return Inertia::render('Auth/Register');
+    }
 
     public function login(Request $request): RedirectResponse
     {
@@ -25,8 +32,15 @@ class AuthController extends Controller
         if (! Auth::attempt($credentials, $request->boolean('remember'))) {
             return back()->withErrors(['email' => __('auth.failed')])->onlyInput('email');
         }
+        if ($request->user()->status !== 'active') {
+            Auth::logout();
+
+            return back()->withErrors(['email' => __('auth.account_inactive')])->onlyInput('email');
+        }
         $request->session()->regenerate();
+        $request->session()->forget('mfa_user_id');
         $request->user()->update(['last_login_at' => now()]);
+
         return redirect()->intended(route('dashboard'));
     }
 
@@ -39,23 +53,30 @@ class AuthController extends Controller
         $user = DB::transaction(function () use ($data): User {
             $user = User::create(['name' => $data['given_name'].' '.$data['family_name'], 'email' => $data['email'], 'password' => Hash::make($data['password']), 'locale' => $data['locale']]);
             Person::create(['user_id' => $user->id, 'external_id' => 'APP-'.Str::upper(Str::random(10)), 'given_name' => $data['given_name'], 'family_name' => $data['family_name'], 'email' => $data['email'], 'locale' => $data['locale']]);
+
             return $user;
         });
         event(new Registered($user));
         Auth::login($user);
+
         return redirect()->route('dashboard')->with('success', __('app.welcome'));
     }
 
     public function logout(Request $request): RedirectResponse
     {
-        Auth::logout(); $request->session()->invalidate(); $request->session()->regenerateToken();
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
         return redirect()->route('login');
     }
 
     public function locale(Request $request): RedirectResponse
     {
         $locale = $request->validate(['locale' => ['required', 'in:en,ar']])['locale'];
-        $request->session()->put('locale', $locale); $request->user()?->update(['locale' => $locale]);
+        $request->session()->put('locale', $locale);
+        $request->user()?->update(['locale' => $locale]);
+
         return back();
     }
 }

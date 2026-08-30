@@ -2,10 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Models\AcademicPeriod;
 use App\Models\Application;
 use App\Models\Person;
 use App\Models\Program;
-use App\Models\AcademicPeriod;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -51,7 +51,7 @@ class AdmissionsWorkflowTest extends TestCase
         $person = Person::create(['user_id' => $applicant->id, 'external_id' => 'APP-SECOND', 'given_name' => 'Second', 'family_name' => 'Applicant', 'email' => $applicant->email]);
         $application = Application::create(['person_id' => $person->id, 'program_id' => Program::first()->id, 'intake_period_id' => AcademicPeriod::first()->id, 'application_number' => 'A2026SECOND', 'status' => 'submitted', 'submitted_at' => now(), 'form_data' => ['address' => 'Demo', 'nationality' => 'Example', 'education_level' => 'Secondary']]);
 
-        $this->actingAs($staff)->post("/applications/{$application->id}/reviews", [
+        $this->actingAs($staff)->withSession(['mfa_user_id' => $staff->id])->post("/applications/{$application->id}/reviews", [
             'recommendation' => 'offer', 'notes' => 'All synthetic checks passed.',
             'checklist' => ['identity' => true, 'academic_records' => true, 'eligibility' => true],
         ])->assertRedirect();
